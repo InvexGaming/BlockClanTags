@@ -1,0 +1,2 @@
+//Block Clan Tags
+//Banned tags 1 per line
