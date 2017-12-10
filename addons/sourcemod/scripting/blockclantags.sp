@@ -5,7 +5,7 @@
 #pragma newdecls required
 
 //Defines
-#define VERSION "1.00"
+#define VERSION "1.01"
 #define CLAN_TAG_MAX_LENGTH 13 //12 chars + null terminator
 
 //ConVars
@@ -23,6 +23,15 @@ public Plugin myinfo =
   url = "http://www.invexgaming.com.au"
 };
 
+//Lateload
+bool g_LateLoaded = false;
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+  g_LateLoaded = late;
+  return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
   g_BannedTags = new ArrayList(CLAN_TAG_MAX_LENGTH);
@@ -34,16 +43,17 @@ public void OnPluginStart()
   
   AutoExecConfig(true, "blockclantags");
   
-  //Hooks
-  HookEvent("player_spawn", Event_PlayerSpawn); 
-  
-  //Process all players
-  for (int i = 1; i <= MaxClients; ++i) {
-    OnClientPutInServer(i);
+  //Late load
+  if (g_LateLoaded) {
+    for (int i = 1; i <= MaxClients; ++i) {
+      ProcessPlayer(i);
+    }
+    
+    g_LateLoaded = false;
   }
 }
 
-public void OnClientPutInServer(int client)
+public void OnClientPostAdminCheck(int client)
 {
   ProcessPlayer(client);
 }
@@ -53,10 +63,22 @@ public void OnClientSettingsChanged(int client)
   ProcessPlayer(client);
 }
 
-public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) 
+public Action OnClientCommandKeyValues(int client, KeyValues kv)
 {
-  int client = GetClientOfUserId(event.GetInt("userid"));
+  char cmd[64];
+  kv.GetSectionName(cmd, sizeof(cmd));
+
+  if (StrEqual(cmd, "ClanTagChanged", false)) {
+    CreateTimer(0.0, Timer_ProcessPlayer, client);
+  }
+
+  return Plugin_Continue;
+}
+
+public Action Timer_ProcessPlayer(Handle timer, int client)
+{
   ProcessPlayer(client);
+  return Plugin_Stop;
 }
 
 void ProcessPlayer(int client)
