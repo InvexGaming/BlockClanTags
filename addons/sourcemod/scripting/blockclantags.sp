@@ -5,8 +5,8 @@
 #pragma newdecls required
 
 //Defines
-#define VERSION "1.01"
-#define CLAN_TAG_MAX_LENGTH 13 //12 chars + null terminator
+#define VERSION "1.02"
+#define CLAN_TAG_MAX_LENGTH 32
 
 //ConVars
 ConVar g_Cvar_ReplacementClanTag = null;
